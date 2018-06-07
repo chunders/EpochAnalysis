@@ -66,7 +66,7 @@ def nearposn(array,value):
 
 
 
-def createPlotOfAll_e_spectra(folderPaths, folderNames, xCrop_px):
+def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop):
     sns.set_palette(sns.color_palette("Set1", len(folderNames)))
     sns.set_context("talk")
     sns.set_style('darkgrid')
@@ -83,8 +83,8 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, xCrop_px):
         
         Energy_eV = Energy_J / 1.6e-19
         Energy_MeV = Energy_eV * 1e-6
-        xlow = nearposn(px, xCrop_px[0])
-        xhigh = nearposn(px, xCrop_px[1])
+        xlow = nearposn(Energy_MeV, Crop[0])
+        xhigh = nearposn(Energy_MeV, Crop[1])
     #    print xlow, xhigh
         #    xlow = 50; xhigh = 400
         intensity = d[:,1]
@@ -105,7 +105,7 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, xCrop_px):
         plt.xlabel('(MeV)')
     else:
         plt.xlabel('(J)')
-    plt.ylabel('Intensity (arb. units)')
+    plt.ylabel('Intensity (# of electrons)')
     
     #==============================================================================
     # Apply the plotting limits
@@ -121,13 +121,12 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, xCrop_px):
         plt.xlim([xAxis[xlow],xAxis[xhigh]])
     
     plt.legend()
-    plt.show()
     print 'Crop corresponds to: ', [xAxis[xlow],xAxis[xhigh]], ' MeV'
     print 'Range of inputed data is: ', Energy_MeV[0], Energy_MeV[-1]
 
 hdrive = '/Volumes/CIDU_passport/2018_Epoch_vega_1/'
 #hdrive += '0601_Gaus_for_wavebreak/'
-hdrive += '0604_JumpLR/'
+hdrive += '0607_JumpLR/'
 
 folderPaths, folderNames = listFolders(hdrive)
 logPlot = False
@@ -149,11 +148,12 @@ folderPaths = folderPaths[Index_to_save]
 folderNames = folderNames[Index_to_save]
 print folderNames
 
-#xCrop_px = [0.15e-20, 1.0e-20]
-xCrop_px = [0.15e-20, 8e-21]     # The top range inputted into the file
+#xCrop_px = [0.15e-20, 1.0e-20] # The momneutm range inputted into the file
+Energy_Crop = [0, 40]     
 
 
-createPlotOfAll_e_spectra(folderPaths, folderNames, xCrop_px)
+createPlotOfAll_e_spectra(folderPaths, folderNames, Energy_Crop)
+plt.savefig(hdrive + 'Electron_spectrum.png')
 
 
 
