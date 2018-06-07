@@ -7,10 +7,19 @@
     /    |   /   |  |\ | ||_
    /____ |__/\ . |  | \|_|\_|
    __________________________ .
-   
+                                                                          
+███████╗██████╗  ██████╗  ██████╗██╗  ██╗                              
+██╔════╝██╔══██╗██╔═══██╗██╔════╝██║  ██║                              
+█████╗  ██████╔╝██║   ██║██║     ███████║                              
+██╔══╝  ██╔═══╝ ██║   ██║██║     ██╔══██║                              
+███████╗██║     ╚██████╔╝╚██████╗██║  ██║                              
+╚══════╝╚═╝      ╚═════╝  ╚═════╝╚═╝  ╚═╝   
+
 Created on Thu May 10 09:58:18 2018
 
 @author: chrisunderwood
+
+A file to be ran on scarf
 
 A new file to do analysis on the epoch files
     reads in the folder path by parsing the option in.
@@ -206,7 +215,9 @@ def indivual_numDens_with_laser(inData, intTime, inpath, savepath, cmap1, vMin, 
     if vMin is not None and vMax is not None:
         plt.imshow(numDens.T, aspect = 'auto', vmin = vMin, vmax = vMax)
     else:
-        minVal_cm = numDens.T.max() * 0.1
+        minVal_cm = numDens.T.max() * 0.001
+        if minVal_cm < numDens.T.min():
+            minVal_cm = numDens.T.min()
         plt.imshow(numDens.T, aspect = 'auto', vmin = minVal_cm)
     plt.colorbar()
     
@@ -260,15 +271,19 @@ def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, savepath, Time = Tru
     cmap = plt.cm.jet
     cmap.set_under(color='white')
     minDensityToPlot = 1e4
-    
+    maxDensityToPlot = 5e11
+
     if Time:
         all_xaxis = all_xaxis * 1e12 #Turn into picoseconds
-        plt.pcolormesh(all_xaxis, yaxis,  allPx_integrated.T, norm=colors.LogNorm(), cmap = cmap, vmin = minDensityToPlot)
+        plt.pcolormesh(all_xaxis, yaxis,  allPx_integrated.T, 
+                       norm=colors.LogNorm(), cmap = cmap, 
+                       vmin = minDensityToPlot, vmax = maxDensityToPlot)
         xmin = all_xaxis[0]; xmax=all_xaxis[-1];
         plt.xlabel("Time (ps)")
     else:
         all_xaxis = all_xaxis * 1e6 #Turn into mu m
-        plt.pcolormesh(all_xaxis, yaxis,  allPx_integrated.T, norm=colors.LogNorm(), cmap = cmap, vmin = minDensityToPlot)
+        plt.pcolormesh(all_xaxis, yaxis,  allPx_integrated.T, 
+                       norm=colors.LogNorm(), cmap = cmap, vmin = minDensityToPlot)
         xmin = all_xaxis[0]; xmax=all_xaxis[-1];
         plt.xlabel(r"Distance $(\mu m)$")
     ymin= yaxis[0] ; ymax=yaxis[- 1]

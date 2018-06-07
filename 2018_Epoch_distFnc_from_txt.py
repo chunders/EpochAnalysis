@@ -11,6 +11,17 @@
 Created on Thu May 31 10:55:36 2018
 
 @author: chrisunderwood
+                                                                       
+███████╗██████╗  ██████╗  ██████╗██╗  ██╗                              
+██╔════╝██╔══██╗██╔═══██╗██╔════╝██║  ██║                              
+█████╗  ██████╔╝██║   ██║██║     ███████║                              
+██╔══╝  ██╔═══╝ ██║   ██║██║     ██╔══██║                              
+███████╗██║     ╚██████╔╝╚██████╗██║  ██║                              
+╚══════╝╚═╝      ╚═════╝  ╚═════╝╚═╝  ╚═╝   
+
+
+2018_Epoch_distFnc_from_txt.py creates the dist fnc from the text files 
+if the scarf plotting failed.
 """
 
 
@@ -60,7 +71,10 @@ def nearposn(array,value):
    
 def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, Time = True):
     import matplotlib.colors as colors
-
+    
+#    plt.imshow(allPx_integrated.T)
+#    plt.show()
+#    
     plt.close()
     cmap = plt.cm.jet
     cmap.set_under(color='white')
@@ -84,7 +98,10 @@ def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, Time = True):
     plt.ylabel(r"Momentum ($kg.ms^{-1}$)")
     plt.show()
 
-hdrive = '/Volumes/CIDU_passport/2018_Epoch_vega_1/DensScan/'
+hdrive = '/Volumes/CIDU_passport/2018_Epoch_vega_1/'
+#hdrive += 'DensScan/'
+hdrive += '0604_JumpLR/'
+
 folderPaths, folderNames = listFolders(hdrive)
 logPlot = True
 plot_MeV = True
