@@ -18,7 +18,8 @@ Created on Wed May 30 15:34:05 2018
 
 @author: chrisunderwood
 
-To compare the outputted spectra, as part of a parameter scan
+To compare the outputted Electron spectrums,
+as part of a parameter scan
 """
 
 
@@ -102,9 +103,9 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop):
         plt.plot(xAxis, intensity, label = names)
     
     if plot_MeV:
-        plt.xlabel('(MeV)')
+        plt.xlabel('Electron Energy (MeV)')
     else:
-        plt.xlabel('(J)')
+        plt.xlabel('Electron Energy (J)')
     plt.ylabel('Intensity (# of electrons)')
     
     #==============================================================================
@@ -114,11 +115,12 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop):
     #plt.yscale('log')
     #
     if logPlot:
-        plt.ylim([yLims[1]/1e3, yLims[1]])
+        plt.ylim([yLims[1]/1e5, yLims[1]])
         plt.yscale('log')
     else:    
         plt.ylim(yLims)
-        plt.xlim([xAxis[xlow],xAxis[xhigh]])
+    
+    plt.xlim([xAxis[xlow],xAxis[xhigh]])
     
     plt.legend()
     print 'Crop corresponds to: ', [xAxis[xlow],xAxis[xhigh]], ' MeV'
@@ -126,7 +128,14 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop):
 
 hdrive = '/Volumes/CIDU_passport/2018_Epoch_vega_1/'
 #hdrive += '0601_Gaus_for_wavebreak/'
-hdrive += '0607_JumpLR/'
+#fileSplice = [8,None]
+
+#hdrive += '0607_Intensity_Scan/'
+#fileSplice = [1,-11]
+
+hdrive += '0612_profileScan/'
+fileSplice = [2,None]
+
 
 folderPaths, folderNames = listFolders(hdrive)
 logPlot = False
@@ -136,7 +145,7 @@ plot_MeV = True
 #==============================================================================
 
 starts = 'SG'
-starts = 'J'
+starts = ''
 
 fins = 'FS'
 #Index_to_save = [i for i in xrange(len(folderNames)) if folderNames[i].endswith(fins)]
@@ -148,8 +157,20 @@ folderPaths = folderPaths[Index_to_save]
 folderNames = folderNames[Index_to_save]
 print folderNames
 
+
 #xCrop_px = [0.15e-20, 1.0e-20] # The momneutm range inputted into the file
-Energy_Crop = [0, 40]     
+Energy_Crop = [0.5, 26]     
+
+Num = []
+for f in folderNames:
+    Num.append(float(f[fileSplice[0]:fileSplice[1]]))
+print Num
+sort =  sorted(zip(Num, folderNames, folderPaths))
+folderNames = [x[1] for x in sort]
+folderPaths = [x[2] for x in sort]
+
+print 'Sorted'
+print folderNames
 
 
 createPlotOfAll_e_spectra(folderPaths, folderNames, Energy_Crop)
