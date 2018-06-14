@@ -150,25 +150,34 @@ def indivual_numDens(inData,time, inpath, savepath, vMin, vMax):
         sumY.append(sum(im))
 #    print 'Len of x, y sum: ', len(sumX), ' ', len(sumY)
 
+#==============================================================================
+# Create fig with subplots in 
+#==============================================================================
     fig = plt.figure(figsize=(8,6))
     # 3 Plots with one major one and two extra ones for each axes.
     gs = gridspec.GridSpec(4, 4, height_ratios=(1,1,1,1), width_ratios=(0.5,1,1,1))
     gs.update(wspace=0.025, hspace=0.025)
+    
+#    Create all axis, including an additional one for the cbar
     ax1 = plt.subplot(gs[0:3, 1:-1])             # Image
     ax1.axis('off')
-
     ax2 = plt.subplot(gs[0:3, 0] ) # right hand side plot
     ax3 = plt.subplot(gs[-1, 1:-1] ) # below plot
-    ax3.yaxis.tick_right()
-
-#    cax4 = plt.subplot(gs[0:3, -1])
     
     cax4 = fig.add_axes([0.7, 0.35, 0.05, 0.5])
 
-    # Create your ticker object with M ticks
-    M = 3
-    xticks = ticker.MaxNLocator(M)
+#    Make the axis look as I want them too
+#    Modify the ticks so they are easily visible
+    xticks = ticker.MaxNLocator(5)
     ax2.yaxis.set_major_locator(xticks)
+
+    xticks = ticker.MaxNLocator(3)
+    ax2.xaxis.set_major_locator(xticks)
+    ax3.yaxis.tick_right()
+
+    ax2.ticklabel_format(style='sci', axis='x', scilimits=(0,0),useOffset=False)
+    ax3.ticklabel_format(style='sci', axis='y', scilimits=(0,0),useOffset=False)
+
     
     im = ax1.imshow(numDens.T, aspect = 'auto')
     ax2.plot(sumY, y )
@@ -366,6 +375,37 @@ def numD_and_Dist_for_all_time(filelist, timesteps, inpath, savepath, vMin, vMax
         inData = sh.getdata(inpath + f)
         indivual_numDens_with_laser(inData,time, inpath, savepath, cmap1, vMin, vMax) 
         indivual_distF(inData, time, inpath, savepath)
+
+def densityVsTime(filelist, inpath, savepath):
+#==============================================================================
+#     Convert the 2D arrays of the distfunc into 1D for each file by histogramming
+#     the different rows into the px values.
+#     This then forms a 2D array for the whole simulation showing the evolution
+#==============================================================================   
+    plt.close()
+    all_N_integrated = []
+    all_Pos = []
+    for f in filelist:
+        inData = sh.getdata(inpath + f)
+        try:
+            all_N_integrated.append(np.average(inData.Derived_Number_Density.data))
+            all_Pos.append(np.average([inData.dist_fn_x_px_electron.grid.data[0][0], inData.dist_fn_x_px_electron.grid.data[0][-1]]))
+        except:
+            print 'Reading error for: ' + f
+    #Convert into np arrays for ease of use
+
+    all_Pos = np.array(all_Pos)
+    all_N_integrated = np.array(all_N_integrated)
+    #Create folder to save into
+    if not os.path.exists(savePath + 'Dist_evo/'):
+        os.makedirs(savePath+ 'Dist_evo/')
+    #Save the files incase the plotting fails
+    np.savetxt(savepath + 'Dist_evo/' + 'densityEvolution.txt', np.c_[all_Pos, all_N_integrated])
+    all_Pos = all_Pos * 1e6 # Convert into mu m
+    plt.plot(all_Pos, all_N_integrated)
+    plt.xlabel(r"Distance $(\mu m)$")
+    plt.ylabel(r'Number Density $m^{-3}$')
+    plt.savefig(savepath + 'Dist_evo/' + 'densityEvolution.png')
 
         
 def momentumVsTime(filelist, inpath, savepath):
@@ -568,6 +608,9 @@ if len(inputDeck) == 1:
     shutil.copy2(scratchPath+inputDeck[0], savePath)
     
 #==============================================================================
+#   Can chose
+#     a -- only do sdf files in numbder dens with laser if true
+#
 # Give the user choice of what plots are occuring at run time
 # with out having to modify the script each run
 # Each option is selected using a char
@@ -577,6 +620,7 @@ if len(inputDeck) == 1:
 #     n -- numberDens
 #     b -- numD_and_Dist_for_all_time
 #     a -- momentumEvo_and_numD_with_laser
+#     p -- densityVsTime
 #==============================================================================
 
 #Last file can be corrupt
@@ -596,4 +640,5 @@ for option in plotOptions:
         numberDens(sdf_list, simTimeSteps, scratchPath, savePath, vMin, vMax)
     if option is 'a':
         momentumEvo_and_numD_with_laser(sdf_list, simTimeSteps, scratchPath, savePath, vMin, vMax)
-
+    if option is 'p':
+        densityVsTime(sdf_list, scratchPath, savePath)

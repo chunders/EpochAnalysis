@@ -67,40 +67,106 @@ def nearposn(array,value):
 
 
 
+def subplotPerSpectra(data, Crop):
+    sns.set_palette(sns.color_palette("Set1", len(folderNames)))
+    sns.set_context("talk")
+    sns.set_style('darkgrid')
+
+    fig, axes = plt.subplots(nrows = len(data), sharex = True, figsize = (7,8))
+
+    for d, names, ax in zip(data, folderNames, axes):
+            yLims = [1e50, 0]
+
+            px = d[:,0]
+            Energy_J = (px ** 2) / (2 * 9.11e-31)
+            
+            Energy_eV = Energy_J / 1.6e-19
+            Energy_MeV = Energy_eV * 1e-6
+            xlow = nearposn(Energy_MeV, Crop[0])
+            xhigh = nearposn(Energy_MeV, Crop[1])
+        #    print xlow, xhigh
+            #    xlow = 50; xhigh = 400
+            intensity = d[:,1]
+            cropI = intensity[xlow:xhigh]
+            if cropI.min() < yLims[0]:
+                yLims[0] = cropI.min()
+            if cropI.max() > yLims[1]:
+                yLims[1] = cropI.max()
+            
+        #    print fp
+            if plot_MeV:
+                xAxis = Energy_MeV
+            else:
+                xAxis = Energy_J
+            ax.plot(xAxis, intensity)
+            ax.set_title('Blade Translation '  + names[1:] + 'mm')
+            ax.set_ylim(yLims)
+#            ax.set_ylabel('Intensity (# of electrons)')
+            ax.ticklabel_format(style='sci', axis='y', scilimits=(0,0),useOffset=False)
+
+    if plot_MeV:
+        plt.xlabel('Electron Energy (MeV)')
+    else:
+        plt.xlabel('Electron Energy (J)')
+#    plt.ylabel('Intensity (# of electrons)')
+    fig.text(0.02, 0.5, 'Intensity (# of electrons)', ha='center', va='center', rotation='vertical')
+    #==============================================================================
+    # Apply the plotting limits
+    #==============================================================================
+    #plt.xlim([-1e-14, 1e-13])
+    #plt.yscale('log')
+    #
+#    if logPlot:
+#        plt.ylim([yLims[1]/1e5, yLims[1]])
+#        plt.yscale('log')
+#    else:    
+#        plt.ylim(yLims)
+#    
+    plt.xlim([xAxis[xlow],xAxis[xhigh]])
+    
+    plt.legend()
+    
+    
+
 def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop):
     sns.set_palette(sns.color_palette("Set1", len(folderNames)))
     sns.set_context("talk")
     sns.set_style('darkgrid')
     yLims = [1e50, 0]
-
+    data = []
     plt.figure(figsize = (10,7))
     for fp, names in zip(folderPaths, folderNames):
         fp += 'Electron_Spectrum.txt'
         
-        #Assuming that the first row is currently px
-        d = np.loadtxt(fp)
-        px = d[:,0]
-        Energy_J = (px ** 2) / (2 * 9.11e-31)
-        
-        Energy_eV = Energy_J / 1.6e-19
-        Energy_MeV = Energy_eV * 1e-6
-        xlow = nearposn(Energy_MeV, Crop[0])
-        xhigh = nearposn(Energy_MeV, Crop[1])
-    #    print xlow, xhigh
-        #    xlow = 50; xhigh = 400
-        intensity = d[:,1]
-        cropI = intensity[xlow:xhigh]
-        if cropI.min() < yLims[0]:
-            yLims[0] = cropI.min()
-        if cropI.max() > yLims[1]:
-            yLims[1] = cropI.max()
-        
-    #    print fp
-        if plot_MeV:
-            xAxis = Energy_MeV
-        else:
-            xAxis = Energy_J
-        plt.plot(xAxis, intensity, label = names)
+        try:
+            #Assuming that the first row is currently px
+            d = np.loadtxt(fp)
+            data.append(d)
+            px = d[:,0]
+            Energy_J = (px ** 2) / (2 * 9.11e-31)
+            
+            Energy_eV = Energy_J / 1.6e-19
+            Energy_MeV = Energy_eV * 1e-6
+            xlow = nearposn(Energy_MeV, Crop[0])
+            xhigh = nearposn(Energy_MeV, Crop[1])
+        #    print xlow, xhigh
+            #    xlow = 50; xhigh = 400
+            intensity = d[:,1]
+            cropI = intensity[xlow:xhigh]
+            if cropI.min() < yLims[0]:
+                yLims[0] = cropI.min()
+            if cropI.max() > yLims[1]:
+                yLims[1] = cropI.max()
+            
+        #    print fp
+            if plot_MeV:
+                xAxis = Energy_MeV
+            else:
+                xAxis = Energy_J
+            plt.plot(xAxis, intensity, label = names)
+        except:
+            print 'Error Reading File'
+            print '    ' + fp
     
     if plot_MeV:
         plt.xlabel('Electron Energy (MeV)')
@@ -125,6 +191,7 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop):
     plt.legend()
     print 'Crop corresponds to: ', [xAxis[xlow],xAxis[xhigh]], ' MeV'
     print 'Range of inputed data is: ', Energy_MeV[0], Energy_MeV[-1]
+    return data
 
 hdrive = '/Volumes/CIDU_passport/2018_Epoch_vega_1/'
 #hdrive += '0601_Gaus_for_wavebreak/'
@@ -159,7 +226,7 @@ print folderNames
 
 
 #xCrop_px = [0.15e-20, 1.0e-20] # The momneutm range inputted into the file
-Energy_Crop = [0.5, 26]     
+Energy_Crop = [2, 50]     
 
 Num = []
 for f in folderNames:
@@ -172,11 +239,16 @@ folderPaths = [x[2] for x in sort]
 print 'Sorted'
 print folderNames
 
+#folderNames = folderNames[:-1] 
 
-createPlotOfAll_e_spectra(folderPaths, folderNames, Energy_Crop)
+data = createPlotOfAll_e_spectra(folderPaths, folderNames, Energy_Crop)
 plt.savefig(hdrive + 'Electron_spectrum.png')
+plt.show()
 
-
+#data = data[:4]
+subplotPerSpectra(data, Energy_Crop)
+plt.tight_layout()
+plt.savefig(hdrive + 'Electron_spectrums_in_subplot.png', dpi = 300)
 
 
 
