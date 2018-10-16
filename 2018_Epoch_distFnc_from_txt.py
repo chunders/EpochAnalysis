@@ -100,7 +100,9 @@ def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, Time = True):
 
 hdrive = '/Volumes/CIDU_passport/2018_Epoch_vega_1/'
 #hdrive += 'DensScan/'
-hdrive += '0604_JumpLR/'
+#hdrive += '0604_JumpLR/'
+hdrive += '1010_SlurmJob/'
+
 
 folderPaths, folderNames = listFolders(hdrive)
 logPlot = True

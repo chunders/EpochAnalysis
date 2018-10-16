@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+    #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
        _ 
@@ -128,7 +128,7 @@ def subplotPerSpectra(data, Crop):
     
     
 
-def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop):
+def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop_X, Crop_Y = False):
     sns.set_palette(sns.color_palette("Set1", len(folderNames)))
     sns.set_context("talk")
     sns.set_style('darkgrid')
@@ -147,17 +147,20 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop):
             
             Energy_eV = Energy_J / 1.6e-19
             Energy_MeV = Energy_eV * 1e-6
-            xlow = nearposn(Energy_MeV, Crop[0])
-            xhigh = nearposn(Energy_MeV, Crop[1])
+            xlow = nearposn(Energy_MeV, Crop_X[0])
+            xhigh = nearposn(Energy_MeV, Crop_X[1])
         #    print xlow, xhigh
             #    xlow = 50; xhigh = 400
             intensity = d[:,1]
-            cropI = intensity[xlow:xhigh]
-            if cropI.min() < yLims[0]:
-                yLims[0] = cropI.min()
-            if cropI.max() > yLims[1]:
-                yLims[1] = cropI.max()
-            
+            if not Crop_Y:
+                cropI = intensity[xlow:xhigh]
+                if cropI.min() < yLims[0]:
+                    yLims[0] = cropI.min()
+                if cropI.max() > yLims[1]:
+                    yLims[1] = cropI.max()
+            else:
+                yLims = Crop_Y
+                
         #    print fp
             if plot_MeV:
                 xAxis = Energy_MeV
@@ -194,14 +197,27 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop):
     return data
 
 hdrive = '/Volumes/CIDU_passport/2018_Epoch_vega_1/'
+gdrive = '/Volumes/GoogleDrive/My Drive/2018_Epoch_vega_1/'
 #hdrive += '0601_Gaus_for_wavebreak/'
 #fileSplice = [8,None]
 
 #hdrive += '0607_Intensity_Scan/'
 #fileSplice = [1,-11]
 
-hdrive += '0612_profileScan/'
-fileSplice = [2,None]
+#hdrive += '0612_profileScan/'
+#fileSplice = [2,None]
+
+
+#hdrive = gdrive + '0711_highRes_selfInjection/'
+#fileSplice = [-4,None]
+
+
+#hdrive = gdrive + '0721_HR_Jump/'
+#fileSplice = [-4,None]
+
+
+hdrive = hdrive + '1010_SlurmJob/'
+fileSplice = [10,12]
 
 
 folderPaths, folderNames = listFolders(hdrive)
@@ -210,9 +226,8 @@ plot_MeV = True
 #==============================================================================
 # Search for the set of folders to look at!
 #==============================================================================
-
-starts = 'SG'
-starts = ''
+starts = 'SG_t8e23'
+#starts = ''
 
 fins = 'FS'
 #Index_to_save = [i for i in xrange(len(folderNames)) if folderNames[i].endswith(fins)]
@@ -224,10 +239,15 @@ folderPaths = folderPaths[Index_to_save]
 folderNames = folderNames[Index_to_save]
 print folderNames
 
+#==============================================================================
+# Crop the axis to the interesting data
+#==============================================================================
+Energy_Crop = [1, 5]    # In MeV
+sIntensityCrop = [0, 0.5e8]
 
-#xCrop_px = [0.15e-20, 1.0e-20] # The momneutm range inputted into the file
-Energy_Crop = [2, 50]     
-
+#==============================================================================
+# Slice name for number to sort by
+#==============================================================================
 Num = []
 for f in folderNames:
     Num.append(float(f[fileSplice[0]:fileSplice[1]]))
@@ -241,7 +261,7 @@ print folderNames
 
 #folderNames = folderNames[:-1] 
 
-data = createPlotOfAll_e_spectra(folderPaths, folderNames, Energy_Crop)
+data = createPlotOfAll_e_spectra(folderPaths, folderNames, Energy_Crop, IntensityCrop)
 plt.savefig(hdrive + 'Electron_spectrum.png')
 plt.show()
 
