@@ -422,6 +422,8 @@ def momentumVsTime(filelist, inpath, savepath):
     for f in filelist:
         inData = sh.getdata(inpath + f)
         if f == filelist[0]:
+            # 181026:: This step can fail causing the saving of
+            # px_eV to not occur.
             yaxis = inData.dist_fn_x_px_electron.grid.data[1]
             px_eV = (((yaxis**2) / (2 * m_e))) * q_e
             px_MeV = px_eV / 1e6

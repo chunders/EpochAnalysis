@@ -216,8 +216,11 @@ gdrive = '/Volumes/GoogleDrive/My Drive/2018_Epoch_vega_1/'
 #fileSplice = [-4,None]
 
 
-hdrive = hdrive + '1010_SlurmJob/'
-fileSplice = [10,12]
+#hdrive = hdrive + '1010_SlurmJob/'
+#fileSplice = [10,12]
+
+hdrive = gdrive + '1018_vega1_Jump/'
+fileSplice = [2,None]
 
 
 folderPaths, folderNames = listFolders(hdrive)
@@ -226,7 +229,7 @@ plot_MeV = True
 #==============================================================================
 # Search for the set of folders to look at!
 #==============================================================================
-starts = 'SG_t8e23'
+starts = ''
 #starts = ''
 
 fins = 'FS'
@@ -243,7 +246,7 @@ print folderNames
 # Crop the axis to the interesting data
 #==============================================================================
 Energy_Crop = [1, 5]    # In MeV
-sIntensityCrop = [0, 0.5e8]
+IntensityCrop = [0, 0.5e8]
 
 #==============================================================================
 # Slice name for number to sort by

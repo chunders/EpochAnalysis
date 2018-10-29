@@ -113,13 +113,13 @@ for fp in df['folder']:
     maxEnergyPos.append(allpos[func.nearposn(maxEnergyPerTS, max(maxEnergyPerTS))])
 #    plt.plot(allpos, maxEnergyPerTS)
 #    plt.show()
-    plt.plot(yaxis,  data[0], '.')
-    plt.plot(yaxis, data[-1], '.')
-    plt.xlim([0, 0.2e-30])
-    #plt.ylim([1, 1e9])
-    plt.yscale('log')
-    plt.xlabel('Momentum')
-    plt.show()
+#    plt.plot(yaxis,  data[0], '.')
+#    plt.plot(yaxis, data[-1], '.')
+#    plt.xlim([0, 0.2e-30])
+#    #plt.ylim([1, 1e9])
+#    plt.yscale('log')
+#    plt.xlabel('Momentum')
+#    plt.show()
     electronsInLastTS.append(np.sum(data[-1]))
     
 se = pd.Series(maxEnergyPerSimulation)
@@ -138,18 +138,21 @@ tf = df_8e23['rho'] == 7e23
 df_8e23 = df_8e23.drop(df_8e23[tf].index)
 df_8e23 = df_8e23.drop(df_8e23[df_8e23['cellsPerL'] > 38].index)
 
-plt.plot(df_8e23['cellsPerL'],df_8e23['MaxEnergy'], '.')
-plt.ylabel('Max Momentum reached in sim')
-plt.xlabel('cells per lambda')
-plt.show()
+fig, ax = plt.subplots(nrows = 3, sharex = True, figsize=(5,10))
 
-plt.plot(df_8e23['cellsPerL'],df_8e23['ElectonsAccelerated'], '.')
-plt.ylabel('Electrons Accel')
-plt.xlabel('cells per lambda')
-plt.show()
+#Plots 0 and 1 are closely related to each other
+ax[0].plot(df_8e23['cellsPerL'],df_8e23['MaxEnergy'], '.-')
+ax[0].set_ylabel('Max Momentum reached in sim')
+
+ax[1].plot(df_8e23['cellsPerL'],df_8e23['maxEnergyPos'], '.-')
+ax[1].set_ylabel('maxEnergyPos')
+
+ax[2].plot(df_8e23['cellsPerL'],df_8e23['ElectonsAccelerated'] * q_e, '.-')
+ax[2].set_ylabel('Electrons Charge Accelerated')
  
-plt.plot(df_8e23['cellsPerL'],df_8e23['maxEnergyPos'], '.')
-plt.ylabel('maxEnergyPos')
-plt.xlabel('cells per lambda')
+ax[2].set_xlabel('cells per lambda')
+
+locs, labels = plt.xticks()
+plt.tight_layout()
 plt.show()
 
