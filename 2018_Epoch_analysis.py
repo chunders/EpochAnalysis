@@ -419,15 +419,20 @@ def momentumVsTime(filelist, inpath, savepath):
     all_Times = []
     all_Pos = []
     laserField_mag = []
+    getAxis = 0
     for f in filelist:
         inData = sh.getdata(inpath + f)
-        if f == filelist[0]:
-            # 181026:: This step can fail causing the saving of
-            # px_eV to not occur.
-            yaxis = inData.dist_fn_x_px_electron.grid.data[1]
-            px_eV = (((yaxis**2) / (2 * m_e))) * q_e
-            px_MeV = px_eV / 1e6
-            px_GeV = px_eV / 1e9
+        if f == filelist[getAxis]:
+            try:
+                # 181026:: This step can fail causing the saving of
+                # px_eV to not occur.
+                yaxis = inData.dist_fn_x_px_electron.grid.data[1]
+                px_eV = (((yaxis**2) / (2 * m_e))) * q_e
+#                px_MeV = px_eV / 1e6
+#                px_GeV = px_eV / 1e9
+            except:
+                print 'failed to get axis data from sdf: ', getAxis
+                getAxis += 1
         try:
             px = inData.dist_fn_x_px_electron.data.T
             intPx = []
@@ -482,8 +487,8 @@ def momentumEvo_and_numD_with_laser(filelist, timesteps, inpath, savepath, vMin,
         if f == filelist[0]:
             yaxis = inData.dist_fn_x_px_electron.grid.data[1]
             px_eV = (((yaxis**2) / (2 * m_e))) * q_e
-            px_MeV = px_eV / 1e6
-            px_GeV = px_eV / 1e9
+#            px_MeV = px_eV / 1e6
+#            px_GeV = px_eV / 1e9
         try:
             px = inData.dist_fn_x_px_electron.data.T
             intPx = []

@@ -101,7 +101,7 @@ def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, Time = True):
 hdrive = '/Volumes/CIDU_passport/2018_Epoch_vega_1/'
 #hdrive += 'DensScan/'
 #hdrive += '0604_JumpLR/'
-hdrive += '1010_SlurmJob/'
+hdrive += '20muFS_testing_selfInjection/dens/'
 
 
 folderPaths, folderNames = listFolders(hdrive)
@@ -123,8 +123,12 @@ print folderNames
 
 #plt.figure(figsize = (10,7))
 for fp, names in zip(folderPaths, folderNames):
-    allPx_integrated = np.loadtxt(fp +'px_vs_t.txt')
-    allpos = np.loadtxt(fp + 'xaxis_x.txt')
-    yaxis = np.loadtxt(fp + 'yaxis_p_eV.txt')
-    createPlot_dist_evo(allPx_integrated, allpos, yaxis)
- 
+    try:
+        allPx_integrated = np.loadtxt(fp +'px_vs_t.txt')
+        allpos = np.loadtxt(fp + 'xaxis_x.txt')
+        yaxis = np.loadtxt(fp + 'yaxis_p_eV.txt')
+        print fp.split('/')[-3]
+        createPlot_dist_evo(allPx_integrated, allpos, yaxis)
+    except:
+        print 'Error loading data from'
+        print fp.split('/')[-3] + '\n'
