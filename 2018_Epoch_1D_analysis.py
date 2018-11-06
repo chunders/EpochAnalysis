@@ -18,6 +18,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sdf_helper as sh
 import os
+import matplotlib.colors as colors
+
 
 def FilesInFolder(DirectoryPath, splice):
     files = os.listdir(DirectoryPath)
@@ -99,19 +101,27 @@ class Load_1D_data():
             plt.plot(self.yGrid_Momentum, self.sumFuncData)
             plt.show()
         return output
+    
+    def time(self):
+        return self.d.Header.values()[10]
         
 sdf_list, simTimeSteps, inputDeck = FilesInFolder('.', [0, -4])
 momentumEvo = []
-for sdf in sdf_list:
+posAndTime = []
+for sdf in sdf_list[10:110]:
     oneD = Load_1D_data(sdf)
 #    oneD.numberDensity_and_Efields()
 #    oneD.DisplayDistributionFunc_correctAxis()
 #    oneD.DisplayDistributionFunc_imshow()
     timeSpectrum = oneD.SpectrumFromDistFunction()
     momentumEvo.append(timeSpectrum[:,1])
-momentumEvo = np.array(momentumEvo)
+    posAndTime.append([np.average(oneD.xGrid), oneD.time()])
 
-plt.imshow(momentumEvo)
+momentumEvo = np.array(momentumEvo)
+posAndTime = np.array(posAndTime)
+
+plt.pcolormesh(posAndTime[:,1], oneD.yGrid_Momentum, momentumEvo.T, norm = colors.LogNorm())
+plt.colorbar()
 
     
 
