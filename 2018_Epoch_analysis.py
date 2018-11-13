@@ -228,11 +228,11 @@ def indivual_numDens_with_laser(inData, intTime, inpath, savepath, cmap1, vMin, 
         if minVal_cm < numDens.T.min():
             minVal_cm = numDens.T.min()
         plt.imshow(numDens.T, aspect = 'auto', vmin = minVal_cm)
-    plt.colorbar()
+    plt.colorbar(title = inData.Derived_Number_Density.units)
     
     eField_masked = abs(ez) * mask
     plt.imshow(eField_masked.T, cmap=cmap1, aspect = 'auto')
-    plt.colorbar()
+    plt.colorbar(title = inData.Electric_Field_Ez.units)
     plt.xticks(xpos,xval, rotation=-90)
     plt.yticks(ypos,yval)
     plt.xlabel(r'$(\mu m)$')
@@ -630,9 +630,9 @@ if len(inputDeck) == 1:
 #     p -- densityVsTime
 #==============================================================================
 
-#Last file can be corrupt
-sdf_list = sdf_list[:-1]
-simTimeSteps = simTimeSteps[:-1]
+##Last file can be corrupt
+#sdf_list = sdf_list[:-1]
+#simTimeSteps = simTimeSteps[:-1]
   
 for option in plotOptions:
     if option is 'm':
