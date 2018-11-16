@@ -78,7 +78,7 @@ def spectrumPlot(grid, spec, time,  savePath, number):
     plt.xlabel('Momentum')
     plt.ylabel('Number of Electrons')
     plt.title('Simulation time {:.2f}ps'.format(time*1e12))
-    plt.savefig(savePath + 'FinalMomentumSpec.png')
+    plt.savefig(savePath +  number + 'FinalMomentumSpec.png')
     plt.clf()    
     
     plt.plot(((grid**2 / (2 * m_e)) / q_e) * 1e-6, spec)
@@ -110,8 +110,8 @@ def produceSpectrum(sdf):
         print 'ERROR IN PX FILE ---- Too many dimensions'
     
     spectrum = np.sum(px, axis = 0)
-    spectrumPlot(grid[1] , spectrum, t, savePath, sdf_list[-1][:-4])
-    np.savetxt(savePath + sdf[-1][:-4] + 'spectrum.txt',np.c_[grid[1], spectrum])
+    spectrumPlot(grid[1] , spectrum, t, savePath, sdf[:-4])
+    np.savetxt(savePath + sdf[:-4] + 'spectrum.txt',np.c_[grid[1], spectrum])
 
 produceSpectrum(sdf_list[-1])
 if parser.parse_args().doSDF_N is not None:
