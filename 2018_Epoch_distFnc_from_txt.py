@@ -30,6 +30,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 #import seaborn as sns
+import matplotlib.colors as colors
 
 
 #==============================================================================
@@ -70,7 +71,6 @@ def nearposn(array,value):
 
    
 def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, Time = True):
-    import matplotlib.colors as colors
     
 #    plt.imshow(allPx_integrated.T)
 #    plt.show()
@@ -78,7 +78,7 @@ def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, Time = True):
     plt.close()
     cmap = plt.cm.jet
     cmap.set_under(color='white')
-    minDensityToPlot = 1e4
+    minDensityToPlot = 1
     
     if Time:
         all_xaxis = all_xaxis * 1e12 #Turn into picoseconds
@@ -94,14 +94,14 @@ def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, Time = True):
     xmin = all_xaxis[0]; xmax = all_xaxis[-1]
     cbar = plt.colorbar()
     cbar.set_label("Density (nparticles/cell)", rotation=270)
-    plt.axis([xmin,xmax,ymin, ymax])
+    plt.axis([xmin,xmax,None, ymax])
     plt.ylabel(r"Momentum ($kg.ms^{-1}$)")
     plt.show()
 
 hdrive = '/Volumes/CIDU_passport/2018_Epoch_vega_1/'
 #hdrive += 'DensScan/'
-#hdrive += '0604_JumpLR/'
-hdrive += '20muFS_testing_selfInjection/dens/'
+hdrive += '1114/'
+#hdrive += '20muFS_testing_selfInjection/dens/'
 
 
 folderPaths, folderNames = listFolders(hdrive)
@@ -125,10 +125,12 @@ print folderNames
 for fp, names in zip(folderPaths, folderNames):
     try:
         allPx_integrated = np.loadtxt(fp +'px_vs_t.txt')
-        allpos = np.loadtxt(fp + 'xaxis_x.txt')
+        posAxis = np.loadtxt(fp + 'xaxis_x.txt')
+        timeAxis = np.loadtxt(fp + 'xaxis_t.txt')
         yaxis = np.loadtxt(fp + 'yaxis_p_eV.txt')
+        
         print fp.split('/')[-3]
-        createPlot_dist_evo(allPx_integrated, allpos, yaxis)
+        createPlot_dist_evo(allPx_integrated, posAxis, yaxis)
     except:
         print 'Error loading data from'
         print fp.split('/')[-3] + '\n'
