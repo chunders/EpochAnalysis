@@ -73,7 +73,7 @@ def stepFolders(folderPath):
     
     return scratchPath, savePath, sdf_list, simTimeSteps
     
-def spectrumPlot(grid, spec, time,  savePath):
+def spectrumPlot(grid, spec, time,  savePath, number):
     plt.plot(grid, spec)
     plt.xlabel('Momentum')
     plt.ylabel('Number of Electrons')
@@ -85,30 +85,34 @@ def spectrumPlot(grid, spec, time,  savePath):
     plt.title('Simulation time {:.2f}ps'.format(time*1e12))
     plt.xlabel('Energy (MeV)')
     plt.ylabel('Number of Electrons')
-    plt.savefig(savePath + 'FinalEnergySpec.png')
+    plt.savefig(savePath + number + 'FinalEnergySpec.png')
     plt.clf()    
     
 #==============================================================================
 # Get the file input from the cmd line
 #==============================================================================
 parser = argparse.ArgumentParser()                                               
-parser.add_argument("--folder", "-f", type=str, required=True)
-
+parser.add_argument("--folder", "-f", type=str, required=True)                  
+parser.add_argument("--doSDF_N", "-n", type=str, required=False)
 
 folderPath = str(parser.parse_args().folder)   
 scratchPath, savePath, sdf_list, simTimeSteps = stepFolders(folderPath)
     
-# Load the last sdf file
-print scratchPath + sdf_list[-1]
-d = sh.getdata(scratchPath + sdf_list[-1])
-px = d.dist_fn_x_px_electron.data
-grid = d.dist_fn_x_px_electron.grid.data
-t = d.Header['time']
+def produceSpectrum(sdf):
+    # Load the last sdf file
+    print scratchPath + sdf
+    d = sh.getdata(scratchPath + sdf)
+    px = d.dist_fn_x_px_electron.data
+    grid = d.dist_fn_x_px_electron.grid.data
+    t = d.Header['time']
+    
+    if len(np.shape(px)) == 3:
+        print 'ERROR IN PX FILE ---- Too many dimensions'
+    
+    spectrum = np.sum(px, axis = 0)
+    spectrumPlot(grid[1] , spectrum, t, savePath, sdf_list[-1][:-4])
+    np.savetxt(savePath + sdf[-1][:-4] + 'spectrum.txt',np.c_[grid[1], spectrum])
 
-if len(np.shape(px)) == 3:
-    print 'ERROR IN PX FILE ---- Too many dimensions'
-
-spectrum = np.sum(px, axis = 0)
-spectrumPlot(grid[1] , spectrum, t, savePath)
-np.savetxt(savePath + 'spectrum.txt',np.c_[grid[1], spectrum])
-
+produceSpectrum(sdf_list[-1])
+if parser.parse_args().doSDF_N is not None:
+    produceSpectrum(sdf_list[int(parser.parse_args().doSDF_N)]) 
