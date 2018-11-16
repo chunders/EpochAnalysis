@@ -228,11 +228,13 @@ def indivual_numDens_with_laser(inData, intTime, inpath, savepath, cmap1, vMin, 
         if minVal_cm < numDens.T.min():
             minVal_cm = numDens.T.min()
         plt.imshow(numDens.T, aspect = 'auto', vmin = minVal_cm)
-    plt.colorbar(title = inData.Derived_Number_Density.units)
+    cbar = plt.colorbar()
+    cbar.set_label(inData.Derived_Number_Density.units)
     
     eField_masked = abs(ez) * mask
     plt.imshow(eField_masked.T, cmap=cmap1, aspect = 'auto')
-    plt.colorbar(title = inData.Electric_Field_Ez.units)
+    cbar = plt.colorbar()
+    cbar.set_label(inData.Electric_Field_Ez.units)
     plt.xticks(xpos,xval, rotation=-90)
     plt.yticks(ypos,yval)
     plt.xlabel(r'$(\mu m)$')
@@ -303,9 +305,10 @@ def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, savepath, Time = Tru
     plt.ylabel(r"Momentum ($kg.ms^{-1}$)")
     
     if Time:
-        plt.savefig(savepath + 'Dist_evo/' + folderPath[:-1] + '_DistPx_Vs_Time.png', dpi = 300)
+        plt.savefig(savepath + 'Dist_evo/'  + '_DistPx_Vs_Time.png', dpi = 300)
     else:
-        plt.savefig(savepath + 'Dist_evo/' + folderPath[:-1] + '_DistPx_Vs_Distance.png', dpi = 300)
+#       evo/' + folderPath[:-1]    Taken this out due to crashing
+        plt.savefig(savepath + 'Dist_evo/'  + '_DistPx_Vs_Distance.png', dpi = 300)
     
     print 'Distribution plot min, max and ave: '
     print allPx_integrated.min(), allPx_integrated.max(), np.average(allPx_integrated)
@@ -327,6 +330,8 @@ def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, savepath, Time = Tru
     
 
 
+
+
 def distFunc_pxX_plot(filelist, timesteps, inpath, savepath):
 #==============================================================================
 #     Create  a dist function for all timesteps
@@ -343,8 +348,40 @@ def numberDens(filelist, timesteps, inpath, savepath, vMin, vMax):
     for f, time in zip(filelist, timesteps):
         inData = sh.getdata(inpath + f)
         indivual_numDens(inData,time, inpath, savepath, vMin, vMax)
+  
+def indivual_eField(inData,time, inpath, savepath):
+    plt.close()
+    plt.figure(figsize=(8,7)) 
+    ez = inData.Electric_Field_Ez.data
+    grid = inData.Grid_Grid_mid.data
+    x = grid[0] / 1e-3
+    y = grid[1] / 1e-3
+    Actual_time = inData.Header.values()[9]    
     
     
+    plt.imshow(ez.T, aspect = 'auto')
+    cbar = plt.colorbar()
+    cbar.set_label(inData.Electric_Field_Ez.units)
+#    plt.xticks(xpos,xval, rotation=-90)
+#    plt.yticks(ypos,yval)
+    plt.xlabel(r'$(\mu m)$')
+    plt.ylabel(r'$(\mu m)$')
+    plt.title('Simulation Time: {0:.4f} (ps)'.format(Actual_time * 1e12))
+    plt.tight_layout()
+
+        #Create folder to save into
+    if not os.path.exists(savePath + 'efieldZ/'):
+        os.makedirs(savePath + 'efieldZ/')
+
+    plt.savefig(savepath + 'efieldZ/' +'laser_' + str(time) + '.png', dpi = 150)
+
+    
+    
+def electricField(filelist, timesteps, inpath, savepath):
+    for f, time in zip(filelist, timesteps):
+        inData = sh.getdata(inpath + f)
+        indivual_eField(inData,time, inpath, savepath)
+        
     
 def numberDens_with_laser_pulse(filelist, timesteps, inpath, savepath, vMin, vMax):
 #==============================================================================
@@ -628,6 +665,7 @@ if len(inputDeck) == 1:
 #     b -- numD_and_Dist_for_all_time
 #     a -- momentumEvo_and_numD_with_laser
 #     p -- densityVsTime
+#     e -- electric field
 #==============================================================================
 
 ##Last file can be corrupt
@@ -649,3 +687,7 @@ for option in plotOptions:
         momentumEvo_and_numD_with_laser(sdf_list, simTimeSteps, scratchPath, savePath, vMin, vMax)
     if option is 'p':
         densityVsTime(sdf_list, scratchPath, savePath)
+    if option is 'e':
+        electricField(sdf_list, simTimeSteps, scratchPath, savePath)
+
+     
