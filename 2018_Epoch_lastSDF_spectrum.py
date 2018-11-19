@@ -113,6 +113,10 @@ def produceSpectrum(sdf):
     spectrumPlot(grid[1] , spectrum, t, savePath, sdf[:-4])
     np.savetxt(savePath + sdf[:-4] + 'spectrum.txt',np.c_[grid[1], spectrum])
 
-produceSpectrum(sdf_list[-1])
+
+# If option -n <Number> is used
 if parser.parse_args().doSDF_N is not None:
     produceSpectrum(sdf_list[int(parser.parse_args().doSDF_N)]) 
+else:
+    produceSpectrum(sdf_list[-1])
+
