@@ -277,38 +277,44 @@ def indivual_distF(inData, intTime, inpath, savepath):
 
     plt.savefig(savepath + 'DistFnc/' + 'distFnc' + str(intTime) + '.png', dpi = 150)
 
-def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, savepath, Time = True):
+def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, savepath, xAxis = 0):
     plt.close()
     cmap = plt.cm.jet
     cmap.set_under(color='white')
     minDensityToPlot = 1e4
     maxDensityToPlot = 5e11
 
-    if Time:
+    if xAxis == 1:
         all_xaxis = all_xaxis * 1e12 #Turn into picoseconds
         plt.pcolormesh(all_xaxis, yaxis,  allPx_integrated.T, 
                        norm=colors.LogNorm(), cmap = cmap, 
                        vmin = minDensityToPlot, vmax = maxDensityToPlot)
         xmin = all_xaxis[0]; xmax=all_xaxis[-1];
         plt.xlabel("Time (ps)")
-    else:
+    elif xAxis == 2:
         all_xaxis = all_xaxis * 1e6 #Turn into mu m
         plt.pcolormesh(all_xaxis, yaxis,  allPx_integrated.T, 
                        norm=colors.LogNorm(), cmap = cmap, vmin = minDensityToPlot)
         xmin = all_xaxis[0]; xmax=all_xaxis[-1];
-        plt.xlabel(r"Distance $(\mu m)$")
+        plt.xlabel("Distance (um)")
+    else:
+        plt.pcolormesh(all_xaxis, yaxis,  allPx_integrated.T, 
+                       norm=colors.LogNorm(), cmap = cmap, vmin = minDensityToPlot)
+        xmin = all_xaxis[0]; xmax=all_xaxis[-1];
+        plt.xlabel("SDF Number")
     ymin= yaxis[0] ; ymax=yaxis[- 1]
     xmin = all_xaxis[0]; xmax = all_xaxis[-1]
     cbar = plt.colorbar()
     cbar.set_label("Density (nparticles/cell)", rotation=270)
     plt.axis([xmin,xmax,ymin, ymax])
-    plt.ylabel(r"Momentum ($kg.ms^{-1}$)")
+    plt.ylabel("Momentum (kg.ms^-1)")
     
-    if Time:
-        plt.savefig(savepath + 'Dist_evo/'  + '_DistPx_Vs_Time.png', dpi = 300)
-    else:
-#       evo/' + folderPath[:-1]    Taken this out due to crashing
-        plt.savefig(savepath + 'Dist_evo/'  + '_DistPx_Vs_Distance.png', dpi = 300)
+    if xAxis == 1:
+        plt.savefig(savepath + 'Dist_evo/' + folderPath.split('/')[-2] + '_DistPx_Vs_Time.png', dpi = 300)
+    elif xAxis == 2:
+        plt.savefig(savepath + 'Dist_evo/' + folderPath.split('/')[-2] + '_DistPx_Vs_Distance.png', dpi = 300)
+    elif xAxis == 0:
+        plt.savefig(savepath + 'Dist_evo/' + folderPath.split('/')[-2] + '_DistPx_Vs_SDF_ts.png', dpi = 300)
     
     print 'Distribution plot min, max and ave: '
     print allPx_integrated.min(), allPx_integrated.max(), np.average(allPx_integrated)
@@ -354,18 +360,18 @@ def indivual_eField(inData,time, inpath, savepath):
     plt.figure(figsize=(8,7)) 
     ez = inData.Electric_Field_Ez.data
     grid = inData.Grid_Grid_mid.data
-    x = grid[0] / 1e-3
-    y = grid[1] / 1e-3
+    x = grid[0] * 1e6
+    y = grid[1] * 1e6
     Actual_time = inData.Header.values()[9]    
     
     
-    plt.imshow(ez.T, aspect = 'auto')
+    plt.pcolormesh(x, y, ez.T)
     cbar = plt.colorbar()
     cbar.set_label(inData.Electric_Field_Ez.units)
 #    plt.xticks(xpos,xval, rotation=-90)
 #    plt.yticks(ypos,yval)
-    plt.xlabel(r'$(\mu m)$')
-    plt.ylabel(r'$(\mu m)$')
+    plt.xlabel('Distance (um)')
+    plt.ylabel('Distance(um)')
     plt.title('Simulation Time: {0:.4f} (ps)'.format(Actual_time * 1e12))
     plt.tight_layout()
 
@@ -381,6 +387,39 @@ def electricField(filelist, timesteps, inpath, savepath):
     for f, time in zip(filelist, timesteps):
         inData = sh.getdata(inpath + f)
         indivual_eField(inData,time, inpath, savepath)
+        
+def gridToEgrid(grid):
+    Egrid = np.zeros((2,1000))
+    Egrid[0]= ((grid[0] **2) / 9.11e-31) * np.sign(grid[0]) / 1.6e-19
+    Egrid[1]= ((grid[1] **2) / 9.11e-31) * np.sign(grid[1]) / 1.6e-19
+    Egrid = Egrid * 1e-6
+    return Egrid    
+
+def create_pxpy_plot(inData, time, inpath, savepath):
+    plt.clf()
+    
+    grid = inData.dist_fn_px_py_electron.grid.data
+    Egrid = gridToEgrid(grid)
+    
+    plt.pcolormesh(Egrid[0], Egrid[1], inData.dist_fn_px_py_electron.data.T,
+                   norm=colors.LogNorm(), vmin = 1)
+    plt.colorbar()
+    plt.xlabel('Energy (MeV)')
+    plt.ylabel('Energy (MeV)')
+    Actual_time = inData.Header.values()[9]
+    plt.title('Time {:.3f}(ps)'.format(Actual_time*1e12))
+    #Create folder to save into
+    if not os.path.exists(savePath + 'pxpy/'):
+        os.makedirs(savePath + 'pxpy/')
+
+    plt.savefig(savepath + 'pxpy/' + str(time) + 'pxpy.png', dpi = 150)
+
+        
+def pxpySpectrum(sdf_list, simTimeSteps, scratchPath, savePath):
+    for f, time in zip(sdf_list, simTimeSteps):
+        inData = sh.getdata(scratchPath + f)
+        create_pxpy_plot(inData,time, scratchPath, savePath)
+    
         
     
 def numberDens_with_laser_pulse(filelist, timesteps, inpath, savepath, vMin, vMax):
@@ -496,8 +535,11 @@ def momentumVsTime(filelist, inpath, savepath):
     np.savetxt(savepath + 'Dist_evo/' + 'xaxis_x.txt', all_Pos, fmt = '%.5e')
     np.savetxt(savepath + 'Dist_evo/' + 'laserField_mag.txt', laserField_mag, fmt = '%.5e')
     
-    createPlot_dist_evo(allPx_integrated, all_Times, yaxis, savepath)
-    createPlot_dist_evo(allPx_integrated, all_Pos, yaxis, savepath, False)
+    createPlot_dist_evo(allPx_integrated, all_Times, yaxis, savepath, xAxis=1)
+    createPlot_dist_evo(allPx_integrated, all_Pos, yaxis, savepath, xAxis=2)
+    createPlot_dist_evo(allPx_integrated, np.array(range(len(all_Pos))), yaxis, savepath, xAxis=0)
+
+
     plotLaserFieldStrength_evo(laserField_mag, all_Times, all_Pos, savepath)
     
     
@@ -554,8 +596,9 @@ def momentumEvo_and_numD_with_laser(filelist, timesteps, inpath, savepath, vMin,
     np.savetxt(savepath + 'Dist_evo/' + 'xaxis_x.txt', all_Pos, fmt = '%.5e')
     np.savetxt(savepath + 'Dist_evo/' + 'laserField_mag.txt', laserField_mag, fmt = '%.5e')
     
-    createPlot_dist_evo(allPx_integrated, all_Times, yaxis, savepath)
-    createPlot_dist_evo(allPx_integrated, all_Pos, yaxis, savepath, False)
+    createPlot_dist_evo(allPx_integrated, all_Times, yaxis, savepath, xAxis = 1)
+    createPlot_dist_evo(allPx_integrated, all_Pos, yaxis, savepath, xAxis = 2)
+    createPlot_dist_evo(allPx_integrated, np.array(range(len(all_Pos))), yaxis, savepath, xAxis = 0 )
     plotLaserFieldStrength_evo(laserField_mag, all_Times, all_Pos, savepath)
     
 def plotLaserFieldStrength_evo(Strength, Time, Distance, savepath):
@@ -571,6 +614,9 @@ def plotLaserFieldStrength_evo(Strength, Time, Distance, savepath):
     plt.savefig(savepath + 'Dist_evo/' + 'laserField_evo_dist.png', dpi = 250)
     
     
+    
+
+
     
             
 #==============================================================================
@@ -666,6 +712,7 @@ if len(inputDeck) == 1:
 #     a -- momentumEvo_and_numD_with_laser
 #     p -- densityVsTime
 #     e -- electric field
+#     s -- spectrum from px py
 #==============================================================================
 
 ##Last file can be corrupt
@@ -689,5 +736,7 @@ for option in plotOptions:
         densityVsTime(sdf_list, scratchPath, savePath)
     if option is 'e':
         electricField(sdf_list, simTimeSteps, scratchPath, savePath)
+    if option is 's':
+        pxpySpectrum(sdf_list, simTimeSteps, scratchPath, savePath)
 
      
