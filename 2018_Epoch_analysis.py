@@ -123,6 +123,11 @@ def createTicks(x, nos, exp = False):
     
     return xpos, xval   
  
+def normaliseArr(arr):
+    arr = np.array(arr)
+    arr = arr - arr.min()
+    return arr / arr.max()
+    
 def indivual_numDens(inData,time, inpath, savepath, vMin, vMax):
     plt.close()
     plt.figure(figsize=(8,7)) 
@@ -398,20 +403,103 @@ def gridToEgrid(grid):
 def create_pxpy_plot(inData, time, inpath, savepath):
     plt.clf()
     
-    grid = inData.dist_fn_px_py_electron.grid.data
-    Egrid = gridToEgrid(grid)
-    
-    plt.pcolormesh(Egrid[0], Egrid[1], inData.dist_fn_px_py_electron.data.T,
-                   norm=colors.LogNorm(), vmin = 1)
-    plt.colorbar()
-    plt.xlabel('Energy (MeV)')
-    plt.ylabel('Energy (MeV)')
-    Actual_time = inData.Header.values()[9]
-    plt.title('Time {:.3f}(ps)'.format(Actual_time*1e12))
     #Create folder to save into
     if not os.path.exists(savePath + 'pxpy/'):
         os.makedirs(savePath + 'pxpy/')
+    Actual_time = inData.Header.values()[9]
+    
+    grid = inData.dist_fn_px_py_electron.grid.data
+    Egrid = gridToEgrid(grid)
+    
+#    # Create the divergence vs counts plot
+#    divergence = []
+#    energy = []
+#    counts = [] 
+#    for i in range(len(grid[0])):
+#        for j in range(len(grid[1])):
+#            divergence.append(abs(grid[0][i]/grid[1][j]))
+#            energy.append(grid[0][i]) # (grid[0][i]**2 + grid[1][j]**2)**0.5)
+#            counts.append(inData.dist_fn_px_py_electron.data.T[i][j])
+#    divergence = np.array(divergence)
+#    energy = ((np.array(energy) ** 2) / (2*m_e))/q_e * 1e-6 # Energy is in MeV
+#    counts = np.array(counts)
+#    print len(divergence), len(energy), len(counts)
+#    print energy.min(), energy.max()
+#    print divergence.min(), divergence.max()
+#    
+#    EnergyHist = np.linspace(energy.min(), energy.max(), 1000)
+#    DivHist = np.linspace(divergence.min(), 5, 10000)
+#    CountHist = np.zeros((len(EnergyHist), len(DivHist)))
+#    
+#    for i in range(len(counts)):
+#        #See which energy bin   
+#        e = 0
+#        while( energy[i] > EnergyHist[e] and energy[i] < EnergyHist[e+1] and e < len(EnergyHist)):
+#            e += 1
+#        d = 0
+#        while( divergence[i] > DivHist[d] and divergence[i] < DivHist[d+1] and d < len(DivHist)):
+#            d += 1
+#        CountHist[e][d] +=counts[i]
+#            
+#    print 'Max count in histogram', CountHist.max()        
+##    plt.imshow(CountHist,aspect = 'auto')                
+#    plt.imshow(CountHist, norm=colors.LogNorm(), vmin = 1e4, aspect = 'auto')            
+##    plt.pcolormesh(EnergyHist, DivHist, CountHist, norm=colors.LogNorm(), vmin = 1e1)
+#    plt.colorbar()
+#    plt.title('Time {:.3f}(ps)'.format(Actual_time*1e12))
+#    plt.xlabel('Energy (MeV)')
+#    plt.ylabel('Divergence (Theta)')
+##    plt.ylim([0, 1])
+#    plt.savefig(savepath + 'pxpy/' + str(time) + 'divVsE.png', dpi = 150)
 
+    #New Idea - get divergence angle per energy slice
+    
+    Energy_vs_div = []
+    pxVals = grid[0]
+    pyVals = grid[1]
+    rowError = 0
+    for px, row in zip(pxVals, inData.dist_fn_px_py_electron.data):
+        divergence = abs(np.arctan(pyVals / px))
+        
+#        print  'div',divergence, 'row', row                 
+#        plt.plot(divergence, row)
+#        print row.min(), row.max(), row[len(row)/2], np.average(row)
+#        print np.average(inData.dist_fn_px_py_electron.data)
+        if np.average(row) > 0.:
+            Energy_vs_div.append([px, np.average(divergence, weights = abs(row))])
+        else:
+            rowError +=1
+#            print 'Row Error', rowError
+            Energy_vs_div.append([px, 0])
+#    plt.yscale('log')
+#    plt.savefig(savepath + 'pxpy/' + str(time) + 'divVsE.png', dpi = 150)     
+#    plt.clf()
+    
+    Energy_vs_div = np.array(Energy_vs_div)
+#    print np.shape(Energy_vs_div)
+    fig, ax = plt.subplots(nrows = 2, sharex  = True )
+    ax[0].plot(Energy_vs_div[:,0], Energy_vs_div[:,1], '.-')
+    ax[0].set_ylabel('Average Divergence (rads)')
+    ax[1].plot(pxVals, inData.dist_fn_px_py_electron.data.sum(axis=1), '.-')
+    ax[1].set_ylabel('Number of Electrons')    
+    ax[1].set_xlabel('Momentum (kgms-1)')
+    ax[1].set_ylim([0, 2e14])
+    plt.tight_layout()
+    
+    
+    np.savetxt(savepath + 'pxpy/' + str(time) + savepath.split('/')[-2] +'momentum_div.txt', np.c_[pxVals, inData.dist_fn_px_py_electron.data.sum(axis=1),Energy_vs_div[:,1]])
+    plt.savefig(savepath + 'pxpy/' + str(time) + savepath.split('/')[-2] + 'Energy_vs_div.png', dpi = 150)       
+
+    
+    
+    
+    plt.clf()
+    plt.pcolormesh(Egrid[0], Egrid[1], inData.dist_fn_px_py_electron.data.T,
+                   norm=colors.LogNorm(), vmin = 1e4)
+    plt.colorbar()
+    plt.xlabel('Energy Beam Axis(MeV)')
+    plt.ylabel('Energy Divergence (MeV)')   
+    plt.title('Time {:.3f}(ps)'.format(Actual_time*1e12))
     plt.savefig(savepath + 'pxpy/' + str(time) + 'pxpy.png', dpi = 150)
 
         
