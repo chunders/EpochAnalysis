@@ -50,12 +50,26 @@ import matplotlib.colors as colors
 import matplotlib.gridspec as gridspec
 from matplotlib import ticker
 
+import matplotlib as mpl
+
+def setup_figure_fontAttributes(size = 12, family = 'normal', weight = 'normal'):
+    
+    font = {'family' : family,
+        'weight' : weight,
+        'size'   : size}
+
+    mpl.rc('font', **font)
+
 
 #==============================================================================
 # Define global constants
 #==============================================================================
 q_e = 1.6e-19
 m_e = 9.11e-31
+
+def nearposn(array,value):    
+    posn = (abs(array-value)).argmin()
+    return posn
 
 def FilesInFolder(DirectoryPath, splice):
     files = os.listdir(DirectoryPath)
@@ -198,8 +212,8 @@ def indivual_numDens(inData,time, inpath, savepath, vMin, vMax):
     
 
     
-    ax3.set_xlabel(r'$(mm)$')
-    ax2.set_ylabel(r'$(mm)$')
+    ax3.set_xlabel('(mm)')
+    ax2.set_ylabel('(mm)')
     plt.colorbar(im, cax = cax4)
     
     plt.suptitle('Simulation Time: {0:.4f} (ps)'.format(Actual_time * 1e12))
@@ -242,8 +256,8 @@ def indivual_numDens_with_laser(inData, intTime, inpath, savepath, cmap1, vMin, 
     cbar.set_label(inData.Electric_Field_Ez.units)
     plt.xticks(xpos,xval, rotation=-90)
     plt.yticks(ypos,yval)
-    plt.xlabel(r'$(\mu m)$')
-    plt.ylabel(r'$(\mu m)$')
+    plt.xlabel('(mu m)')
+    plt.ylabel('(mu m)')
     plt.title('Simulation Time: {0:.4f} (ps)'.format(Actual_time * 1e12))
     plt.tight_layout()
 
@@ -268,12 +282,12 @@ def indivual_distF(inData, intTime, inpath, savepath):
     plt.xticks(xpos,xval)
     plt.yticks(ypos,yval)
     
-    plt.xlabel(r'X($\mu m$)')
-    plt.ylabel(r'$P_x$ ($kg m s^{-1}$)')
+    plt.xlabel('X(mu m)')
+    plt.ylabel('P_x (kg m s^-1)')
     Actual_time = inData.Header.values()[9] * 1e12
 
 
-    plt.title (r'$x - P_x$ @ t = {0:.5g} (ps)'.format(Actual_time))
+    plt.title('x - P_x @ t = {0:.5g} (ps)'.format(Actual_time))
     plt.axis([xmin,xmax,ymin, ymax])
     
     #Create folder to save into
@@ -315,11 +329,17 @@ def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, savepath, xAxis = 0)
     plt.ylabel("Momentum (kg.ms^-1)")
     
     if xAxis == 1:
-        plt.savefig(savepath + 'Dist_evo/' + folderPath.split('/')[-2] + '_DistPx_Vs_Time.png', dpi = 300)
+        plt.savefig(savepath + 'Dist_evo/' + folderPath.split('/')[-2] + '_DistPx_Vs_Time.png', 
+                    dpi = 300,
+                    bbox_inches='tight')
     elif xAxis == 2:
-        plt.savefig(savepath + 'Dist_evo/' + folderPath.split('/')[-2] + '_DistPx_Vs_Distance.png', dpi = 300)
+        plt.savefig(savepath + 'Dist_evo/' + folderPath.split('/')[-2] + '_DistPx_Vs_Distance.png', 
+                    dpi = 300,
+                    bbox_inches='tight')
     elif xAxis == 0:
-        plt.savefig(savepath + 'Dist_evo/' + folderPath.split('/')[-2] + '_DistPx_Vs_SDF_ts.png', dpi = 300)
+        plt.savefig(savepath + 'Dist_evo/' + folderPath.split('/')[-2] + '_DistPx_Vs_SDF_ts.png', 
+                    dpi = 300,
+                    bbox_inches='tight')
     
     print 'Distribution plot min, max and ave: '
     print allPx_integrated.min(), allPx_integrated.max(), np.average(allPx_integrated)
@@ -337,7 +357,8 @@ def createPlot_dist_evo(allPx_integrated, all_xaxis, yaxis, savepath, xAxis = 0)
 #    plt.ylabel("Intensity (Normalised)")
     plt.ylabel("Intensity ()")
     plt.title("Electron Bunch Spectrum")
-    plt.savefig(savepath + 'Dist_evo/' + 'Electron Spectrum.png', dpi = 300)
+    plt.savefig(savepath + 'Dist_evo/' + 'Electron Spectrum.png', 
+                dpi = 300)
     
 
 
@@ -355,6 +376,7 @@ def numberDens(filelist, timesteps, inpath, savepath, vMin, vMax):
 #==============================================================================
 #     Creates the plot of the number density, 
 #==============================================================================
+    setup_figure_fontAttributes(size = 11)    
     #For each time step create plot and then save that with its simstep position
     for f, time in zip(filelist, timesteps):
         inData = sh.getdata(inpath + f)
@@ -406,54 +428,16 @@ def create_pxpy_plot(inData, time, inpath, savepath):
     #Create folder to save into
     if not os.path.exists(savePath + 'pxpy/'):
         os.makedirs(savePath + 'pxpy/')
+    if not os.path.exists(savePath + 'pxpy/Text/'):
+        os.makedirs(savePath + 'pxpy/Text/')
+    if not os.path.exists(savePath + 'pxpy/distfnc/'):
+        os.makedirs(savePath + 'pxpy/distfnc/')         
     Actual_time = inData.Header.values()[9]
     
     grid = inData.dist_fn_px_py_electron.grid.data
     Egrid = gridToEgrid(grid)
     
-#    # Create the divergence vs counts plot
-#    divergence = []
-#    energy = []
-#    counts = [] 
-#    for i in range(len(grid[0])):
-#        for j in range(len(grid[1])):
-#            divergence.append(abs(grid[0][i]/grid[1][j]))
-#            energy.append(grid[0][i]) # (grid[0][i]**2 + grid[1][j]**2)**0.5)
-#            counts.append(inData.dist_fn_px_py_electron.data.T[i][j])
-#    divergence = np.array(divergence)
-#    energy = ((np.array(energy) ** 2) / (2*m_e))/q_e * 1e-6 # Energy is in MeV
-#    counts = np.array(counts)
-#    print len(divergence), len(energy), len(counts)
-#    print energy.min(), energy.max()
-#    print divergence.min(), divergence.max()
-#    
-#    EnergyHist = np.linspace(energy.min(), energy.max(), 1000)
-#    DivHist = np.linspace(divergence.min(), 5, 10000)
-#    CountHist = np.zeros((len(EnergyHist), len(DivHist)))
-#    
-#    for i in range(len(counts)):
-#        #See which energy bin   
-#        e = 0
-#        while( energy[i] > EnergyHist[e] and energy[i] < EnergyHist[e+1] and e < len(EnergyHist)):
-#            e += 1
-#        d = 0
-#        while( divergence[i] > DivHist[d] and divergence[i] < DivHist[d+1] and d < len(DivHist)):
-#            d += 1
-#        CountHist[e][d] +=counts[i]
-#            
-#    print 'Max count in histogram', CountHist.max()        
-##    plt.imshow(CountHist,aspect = 'auto')                
-#    plt.imshow(CountHist, norm=colors.LogNorm(), vmin = 1e4, aspect = 'auto')            
-##    plt.pcolormesh(EnergyHist, DivHist, CountHist, norm=colors.LogNorm(), vmin = 1e1)
-#    plt.colorbar()
-#    plt.title('Time {:.3f}(ps)'.format(Actual_time*1e12))
-#    plt.xlabel('Energy (MeV)')
-#    plt.ylabel('Divergence (Theta)')
-##    plt.ylim([0, 1])
-#    plt.savefig(savepath + 'pxpy/' + str(time) + 'divVsE.png', dpi = 150)
-
     #New Idea - get divergence angle per energy slice
-    
     Energy_vs_div = []
     pxVals = grid[0]
     pyVals = grid[1]
@@ -461,34 +445,48 @@ def create_pxpy_plot(inData, time, inpath, savepath):
     for px, row in zip(pxVals, inData.dist_fn_px_py_electron.data):
         divergence = abs(np.arctan(pyVals / px))
         
-#        print  'div',divergence, 'row', row                 
-#        plt.plot(divergence, row)
-#        print row.min(), row.max(), row[len(row)/2], np.average(row)
-#        print np.average(inData.dist_fn_px_py_electron.data)
         if np.average(row) > 0.:
             Energy_vs_div.append([px, np.average(divergence, weights = abs(row))])
         else:
             rowError +=1
 #            print 'Row Error', rowError
             Energy_vs_div.append([px, 0])
-#    plt.yscale('log')
-#    plt.savefig(savepath + 'pxpy/' + str(time) + 'divVsE.png', dpi = 150)     
-#    plt.clf()
-    
     Energy_vs_div = np.array(Energy_vs_div)
-#    print np.shape(Energy_vs_div)
-    fig, ax = plt.subplots(nrows = 2, sharex  = True )
-    ax[0].plot(Energy_vs_div[:,0], Energy_vs_div[:,1], '.-')
-    ax[0].set_ylabel('Average Divergence (rads)')
-    ax[1].plot(pxVals, inData.dist_fn_px_py_electron.data.sum(axis=1), '.-')
-    ax[1].set_ylabel('Number of Electrons')    
-    ax[1].set_xlabel('Momentum (kgms-1)')
-    ax[1].set_ylim([0, 2e14])
+
+    fig = plt.figure(figsize=(8,6))
+    # 3 Plots 
+    gs = gridspec.GridSpec(3,1) # height_ratios=(1,1,1,1), width_ratios=(0.5,1,1,1)
+#    gs.update(wspace=0.025, hspace=0.025)
+    
+#    Create all axis, including an additional one for the cbar
+    ax1 = plt.subplot(gs[0, 0])
+    ax2 = plt.subplot(gs[1, 0], sharex = ax1)
+    ax3 = plt.subplot(gs[2, 0])
+
+    intensityOfSpectrum = inData.dist_fn_px_py_electron.data.sum(axis=1)
+    ax1.plot(Energy_vs_div[:,0], Energy_vs_div[:,1], '.-')
+    ax1.set_ylabel('Average Divergence\n(rads)')
+    ax2.plot(pxVals, intensityOfSpectrum, '.-')
+    ax2.set_ylabel('Number of Electrons')    
+    ax2.set_xlabel('Momentum (kgms-1)')
+    ax2.set_ylim([0, 3e13])
+    
+    px0index = nearposn(pxVals, 0.)
+    
+    ECroppedAt0 = ((pxVals[px0index:] **2) / 9.11e-31) / 1.6e-19 *1e-6
+    intensityOfSpectrumCropped = intensityOfSpectrum[px0index:]
+    
+    ax3.plot(ECroppedAt0, intensityOfSpectrumCropped, '.-')
+    ax3.set_ylim([0, 2.5e10])
+#    ax3.set_yscale('log')
+    ax3.set_xlim([0, 60])
+    ax3.set_ylabel('Number of Electrons')
+    ax3.set_xlabel('Energy (MeV)')
     plt.tight_layout()
     
     
-    np.savetxt(savepath + 'pxpy/' + str(time) + savepath.split('/')[-2] +'momentum_div.txt', np.c_[pxVals, inData.dist_fn_px_py_electron.data.sum(axis=1),Energy_vs_div[:,1]])
-    plt.savefig(savepath + 'pxpy/' + str(time) + savepath.split('/')[-2] + 'Energy_vs_div.png', dpi = 150)       
+    np.savetxt(savepath + 'pxpy/Text/' + str(time).zfill(4) +'_' + savepath.split('/')[-2] +'momentum_div.txt', np.c_[pxVals, inData.dist_fn_px_py_electron.data.sum(axis=1),Energy_vs_div[:,1]])
+    plt.savefig(savepath + 'pxpy/' + str(time).zfill(4) +'_' + savepath.split('/')[-2] + 'Energy_vs_div.png', dpi = 150)       
 
     
     
@@ -500,7 +498,7 @@ def create_pxpy_plot(inData, time, inpath, savepath):
     plt.xlabel('Energy Beam Axis(MeV)')
     plt.ylabel('Energy Divergence (MeV)')   
     plt.title('Time {:.3f}(ps)'.format(Actual_time*1e12))
-    plt.savefig(savepath + 'pxpy/' + str(time) + 'pxpy.png', dpi = 150)
+    plt.savefig(savepath + 'pxpy/distfnc/' + str(time).zfill(4) + '_pxpy.png', dpi = 150)
 
         
 def pxpySpectrum(sdf_list, simTimeSteps, scratchPath, savePath):
@@ -567,8 +565,8 @@ def densityVsTime(filelist, inpath, savepath):
     np.savetxt(savepath + 'Dist_evo/' + 'densityEvolution.txt', np.c_[all_Pos, all_N_integrated])
     all_Pos = all_Pos * 1e6 # Convert into mu m
     plt.plot(all_Pos, all_N_integrated)
-    plt.xlabel(r"Distance $(\mu m)$")
-    plt.ylabel(r'Number Density $m^{-3}$')
+    plt.xlabel("Distance (mu m)")
+    plt.ylabel('Number Density (m^-3)')
     plt.savefig(savepath + 'Dist_evo/' + 'densityEvolution.png')
 
         
@@ -619,7 +617,7 @@ def momentumVsTime(filelist, inpath, savepath):
     #Save the files incase the plotting fails
     np.savetxt(savepath + 'Dist_evo/' + 'px_vs_t.txt', allPx_integrated, fmt = '%.5e')
     np.savetxt(savepath + 'Dist_evo/' + 'xaxis_t.txt', all_Times, fmt = '%.5e')
-    np.savetxt(savepath + 'Dist_evo/' + 'yaxis_p_eV.txt', px_eV, fmt = '%.5e')
+    np.savetxt(savepath + 'Dist_evo/' + 'yaxis_p_eV.txt', yaxis, fmt = '%.5e')
     np.savetxt(savepath + 'Dist_evo/' + 'xaxis_x.txt', all_Pos, fmt = '%.5e')
     np.savetxt(savepath + 'Dist_evo/' + 'laserField_mag.txt', laserField_mag, fmt = '%.5e')
     
@@ -698,7 +696,7 @@ def plotLaserFieldStrength_evo(Strength, Time, Distance, savepath):
     plt.close()
     plt.plot(Distance, Strength)
     plt.ylabel('Total Mag of Laser Field, Ez')
-    plt.xlabel(r'Distance $(\mu m)$')
+    plt.xlabel(r'Distance (mu m)')
     plt.savefig(savepath + 'Dist_evo/' + 'laserField_evo_dist.png', dpi = 250)
     
     
@@ -785,6 +783,10 @@ if len(inputDeck) == 1:
     import shutil
     shutil.copy2(scratchPath+inputDeck[0], savePath)
     
+
+
+setup_figure_fontAttributes(size = 16)    
+    
 #==============================================================================
 #   Can chose
 #     a -- only do sdf files in numbder dens with laser if true
@@ -804,8 +806,7 @@ if len(inputDeck) == 1:
 #==============================================================================
 
 ##Last file can be corrupt
-#sdf_list = sdf_list[:-1]
-#simTimeSteps = simTimeSteps[:-1]
+#sdf_list = sdf_list[:-1] ; simTimeSteps = simTimeSteps[:-1]
   
 for option in plotOptions:
     if option is 'm':
