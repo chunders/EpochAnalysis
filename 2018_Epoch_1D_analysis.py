@@ -98,30 +98,78 @@ class Load_1D_data():
     def numberDensity_and_Efields(self, smoothBoxSize = 20):
         #Plot the number density and the electric field on top of each other
         #Smooth the number density to see the shape better    
-        NumberDensity = self.d.Derived_Number_Density.data
-        NDSmooth = self.smooth(NumberDensity, smoothBoxSize)
+        ElectronDensity = self.d.Derived_Number_Density_electron
+        NDSmooth = self.smooth(ElectronDensity.data, smoothBoxSize)
+        try:
+            IonDens = self.d.Derived_Number_Density_carbon
+            ionSmooth = self.smooth(IonDens.data, smoothBoxSize)
+            rows = 3
+            ions = True
+        except AttributeError:
+            rows = 2
+            ions = False
+            
+
         
         grid = (self.d.Electric_Field_Ex.grid.data[0][1:] + self.d.Electric_Field_Ex.grid.data[0][:-1]) * 0.5
         grid = grid * 1e6
         
-        fig, ax = plt.subplots(nrows = 2, sharex=True)
+        fig, ax = plt.subplots(nrows = rows, sharex=True)
         ax[0].plot(grid, self.d.Electric_Field_Ex.data, label = 'X')
         ax[0].plot(grid, self.d.Electric_Field_Ey.data , label = 'Y')
         ax[0].plot(grid, self.d.Electric_Field_Ez.data, label = 'Z')
         ax[0].set_xlim([grid[0], grid[-1]])
         ax[0].legend();
         ax[1].plot(grid, NDSmooth)
-        ax[1].set_xlim([grid[0], grid[-1]])     
+        ax[1].set_xlim([grid[0], grid[-1]])    
+        if ions:
+            ax[2].plot(grid, ionSmooth)
+            ax[2].set_ylabel('Ion Dens' + IonDens.units)
 
-        ax[0].set_ylabel('Electric Field')
+        ax[0].set_ylabel('E Field ' + self.d.Electric_Field_Ez.units)
         ax[1].set_xlabel('Position (mu m)')
-        ax[1].set_ylabel('Number Density')
+        ax[1].set_ylabel('e Dens ' + ElectronDensity.units)
 
         if not os.path.exists(self.savePath + 'NumDen_L/'):
             os.makedirs(self.savePath+ 'NumDen_L/')
         plt.savefig(self.savePath + 'NumDen_L/' + 'numAndL' + str(self.count).zfill(4) + '.png')
         plt.clf()
 #        plt.show()
+
+    def temperatureProfile(self, smoothBoxSize = 100):
+        temp = self.d.Derived_Temperature_electron
+        gridMid = (temp.grid.data[0][1:] + temp.grid.data[0][:-1]) * 0.5
+
+        try:
+            ionTemp = self.d.Derived_Temperature_carbon
+            ionT_Smooth = self.smooth(ionTemp.data, smoothBoxSize)
+            fig, ax = plt.subplots(nrows = 2, sharex=True)
+            ions = True
+        except AttributeError:
+            ions = False
+
+        
+
+        
+        eTemp = self.d.Derived_Temperature_electron
+        eT_Smooth = self.smooth(eTemp.data, smoothBoxSize)
+
+        if ions:
+            ax[0].plot(gridMid, eT_Smooth)
+            ax[0].set_ylabel('Electron Temp ' + eTemp.units )
+            ax[1].plot(gridMid, ionT_Smooth)
+            ax[1].set_ylabel('Ion Temp ' + ionTemp.units)        
+            ax[1].set_xlabel('Distance ' + temp.grid.units[0])    
+        else:
+            plt.plot(gridMid, eT_Smooth)
+            plt.ylabel('Electron Temp ' + eTemp.units )
+            plt.xlabel('Distance ' + temp.grid.units[0])    
+            
+        if not os.path.exists(self.savePath + 'Temp/'):
+            os.makedirs(self.savePath+ 'Temp/')        
+        plt.savefig(self.savePath + 'Temp/' + 'Temp' + str(self.count).zfill(4) + '.png')
+        plt.clf()
+        
         
     def SpectrumFromDistFunction(self, plotting=False):
         self.assignDistFuncGrid()
@@ -184,6 +232,7 @@ if __name__ == "__main__":
     numDensLaser = False
     distPlot_imshow = False
     distPlot_axis = False
+    temperature = False
     for opt in plotOptions:
         if opt  == 'l':
             numDensLaser = True
@@ -191,6 +240,9 @@ if __name__ == "__main__":
             distPlot_imshow = True
         if opt == 'da':
             distPlot_axis = True
+        if opt == 't':
+            temperature = True
+        
 
     
 #==============================================================================
@@ -198,11 +250,13 @@ if __name__ == "__main__":
 #==============================================================================
     sdf_list, simTimeSteps, inputDeck = FilesInFolder(scratchPath, [0, -4])
     
-    momentumEvo = []
-    posAndTime = []
+    if distPlot_imshow or distPlot_axis:
+        momentumEvo = []
+        posAndTime = []
 #    sdf_spaced = sdf_list
     sdf_spaced = GetSpacedElements(sdf_list, spacing)
-    for sdf in sdf_spaced:
+    
+    for sdf in sdf_spaced[-3:]:
         oneD = Load_1D_data(scratchPath + sdf, savePath)
         if numDensLaser:
             oneD.numberDensity_and_Efields()
@@ -211,25 +265,41 @@ if __name__ == "__main__":
         if distPlot_axis:            
             oneD.DisplayDistributionFunc_correctAxis()
 
-        if sdf == sdf_spaced[-1]:
-            #Save the last plot as it is the spectrum
-            timeSpectrum = oneD.SpectrumFromDistFunction(True)
-        else:
-            timeSpectrum = oneD.SpectrumFromDistFunction(False)
+        if distPlot_imshow or distPlot_axis:
+            
+            if sdf == sdf_spaced[-1]:
+                #Save the last plot as it is the spectrum
+                timeSpectrum = oneD.SpectrumFromDistFunction(True)
+            else:
+                timeSpectrum = oneD.SpectrumFromDistFunction(False)
+    
+            momentumEvo.append(timeSpectrum[:,1])
+            posAndTime.append([np.average(oneD.xGrid), oneD.time()])
+        
+        if temperature:
+            oneD.temperatureProfile()
+    
+    if distPlot_imshow or distPlot_axis:    
+        momentumEvo = np.array(momentumEvo)
+        posAndTime = np.array(posAndTime)
+        if not os.path.exists(savePath + 'DistEvo/'):
+            os.makedirs(savePath+ 'DistEvo/')    
+        print ('Saving the arrays to file')
+        np.savetxt(savePath + 'DistEvo/xAxis.txt', posAndTime)
+        np.savetxt(savePath + 'DistEvo/yMomentum.txt', oneD.yGrid_Momentum)
+        np.savetxt(savePath + 'DistEvo/momentumEvo.txt', momentumEvo.T)
+        plt.clf()
+        plt.pcolormesh(posAndTime[:,0] * 1e6, oneD.yGrid_Momentum, momentumEvo.T, norm = colors.LogNorm())
+        plt.colorbar()
+        plt.xlabel('Position (mu m)')
+        plt.savefig(savePath + 'DistEvo/momentumEvo_POS.png')
+        
+        plt.clf()
+        plt.pcolormesh(posAndTime[:,1] * 1e12, oneD.yGrid_Momentum, momentumEvo.T, norm = colors.LogNorm())
+        plt.colorbar()
+        plt.xlabel('Time (ps)')
+        plt.savefig(savePath + 'DistEvo/momentumEvo_TIME.png')
 
-        momentumEvo.append(timeSpectrum[:,1])
-        posAndTime.append([np.average(oneD.xGrid), oneD.time()])
-    
-    momentumEvo = np.array(momentumEvo)
-    posAndTime = np.array(posAndTime)
-    
-    if not os.path.exists(savePath + 'DistEvo/'):
-        os.makedirs(savePath+ 'DistEvo/')    
-   
-    print ('Saving the arrays to file')
-    np.savetxt(savePath + 'DistEvo/xAxis.txt', posAndTime)
-    np.savetxt(savePath + 'DistEvo/yMomentum.txt', oneD.yGrid_Momentum)
-    np.savetxt(savePath + 'DistEvo/momentumEvo.txt', momentumEvo.T)
     
     print ('Copying input.deck')
     if len(inputDeck) == 1:
@@ -238,17 +308,6 @@ if __name__ == "__main__":
         shutil.copy2(scratchPath+inputDeck[0], savePath)
     
     
-    plt.clf()
-    plt.pcolormesh(posAndTime[:,0] * 1e6, oneD.yGrid_Momentum, momentumEvo.T, norm = colors.LogNorm())
-    plt.colorbar()
-    plt.xlabel('Position (mu m)')
-    plt.savefig(savePath + 'DistEvo/momentumEvo_POS.png')
-    
-    plt.clf()
-    plt.pcolormesh(posAndTime[:,1] * 1e12, oneD.yGrid_Momentum, momentumEvo.T, norm = colors.LogNorm())
-    plt.colorbar()
-    plt.xlabel('Time (ps)')
-    plt.savefig(savePath + 'DistEvo/momentumEvo_TIME.png')
 
     
 
