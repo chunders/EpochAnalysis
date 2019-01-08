@@ -167,6 +167,8 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop_X, Crop_Y = False):
             else:
                 xAxis = Energy_J
             plt.plot(xAxis, intensity, label = names)
+            plt.xlim([xAxis[xlow],xAxis[xhigh]])
+            
         except:
             print 'Error Reading File'
             print '    ' + fp
@@ -189,7 +191,6 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop_X, Crop_Y = False):
     else:    
         plt.ylim(yLims)
     
-    plt.xlim([xAxis[xlow],xAxis[xhigh]])
     
     plt.legend()
     print 'Crop corresponds to: ', [xAxis[xlow],xAxis[xhigh]], ' MeV'
@@ -197,7 +198,9 @@ def createPlotOfAll_e_spectra(folderPaths, folderNames, Crop_X, Crop_Y = False):
     return data
 
 hdrive = '/Volumes/CIDU_passport/2018_Epoch_vega_1/'
-gdrive = '/Volumes/GoogleDrive/My Drive/2018_Epoch_vega_1/'
+gdrive = '/Volumes/GoogleDrive/My Drive/'
+gdrive += '2018_Epoch_vega_1/'
+
 #hdrive += '0601_Gaus_for_wavebreak/'
 #fileSplice = [8,None]
 
@@ -216,11 +219,13 @@ gdrive = '/Volumes/GoogleDrive/My Drive/2018_Epoch_vega_1/'
 #fileSplice = [-4,None]
 
 
-#hdrive = hdrive + '1010_SlurmJob/'
-#fileSplice = [10,12]
+hdrive = hdrive + '1010_SlurmJob/'
+fileSplice = [10,12]
 
-hdrive = gdrive + '1018_vega1_Jump/'
-fileSplice = [2,None]
+#hdrive = gdrive + '1018_vega1_Jump/'
+#fileSplice = [2,None]
+
+
 
 
 folderPaths, folderNames = listFolders(hdrive)
